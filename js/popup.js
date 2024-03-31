@@ -1,6 +1,5 @@
 import { pluralize } from './util.js';
 import { addPostedMarker, clearMarkers } from './map.js';
-// import { getFilteredOffers } from './map-filters.js';
 
 const MAX_OFFER_COUNT = 10;
 
@@ -15,6 +14,14 @@ const CAPACITY_MESSAGE = {
     'гостей',
     'гостей'
   ]
+};
+
+const OfferNameByType = {
+  'palace': 'Дворец',
+  'flat': 'Квартира',
+  'house': 'Дом',
+  'bungalow': 'Бунгало',
+  'hotel': 'Отель',
 };
 
 // находим template '#card'
@@ -51,6 +58,7 @@ const filterFeatures = (features, featuresList) => {
   });
 };
 
+// отображение загруженных данных в карточке обявления
 const checkCard = (card, objKey, elementClass, contentType, specialOutcome) => {
   const element = card.querySelector(elementClass);
   if (objKey === 'undefined') {
@@ -65,7 +73,21 @@ const checkCard = (card, objKey, elementClass, contentType, specialOutcome) => {
   }
 };
 
-// создание клонированого изображений по шаблону
+// добавляем несколько фотографий к карточке объявления
+const addPhotosToContainer = (photos, photoContainer, photosContainer) => {
+  if (typeof photos === 'undefined') {
+    photosContainer.style.display = 'none';
+  } else {
+    photos.forEach((photo) => {
+      photoContainer.src = photo;
+      photosContainer.append(photoContainer);
+      photosContainer.innerHTML += '';
+    });
+  }
+};
+
+
+// создание клонированого предложения(карточки) по шаблону
 const createCard = ({ author, offer, location }) => {
   const card = cardTemplate.cloneNode(true);
 
@@ -73,7 +95,7 @@ const createCard = ({ author, offer, location }) => {
   checkCard(card, offer.title, '.popup__title', 'textContent');
   checkCard(card, offer.address, '.popup__text--address', 'textContent');
   checkCard(card, offer.price, '.popup__text--price', 'textContent', `${ offer.price } ₽/ночь`);
-  checkCard(card, offer.type, '.popup__type', 'textContent');
+  checkCard(card, offer.type, '.popup__type', 'textContent', OfferNameByType[offer.type]);
   checkCard(card, offer.rooms, '.popup__text--capacity', 'textContent', getCapacityMessage(offer.rooms, offer.guests));
   checkCard(card, offer.checkin, '.popup__text--time', 'textContent', `Заезд после ${ offer.checkin }, выезд до ${ offer.checkout }`);
   checkCard(card, offer.description, '.popup__description', 'textContent');
@@ -88,16 +110,9 @@ const createCard = ({ author, offer, location }) => {
   }
 
   const cardPhotos = card.querySelector('.popup__photos');
+  const cardPhoto = card.querySelector('.popup__photo');
 
-  if (typeof offer.photos === 'undefined') {
-    cardPhotos.style.display = 'none';
-  } else {
-    offer.photos.forEach((photo) => {
-      const cardPhoto = card.querySelector('.popup__photo');
-      cardPhoto.src = photo;
-      cardPhotos.append(cardPhoto);
-    });
-  }
+  addPhotosToContainer(offer.photos, cardPhoto, cardPhotos);
 
   addPostedMarker(location, card);
   return card;
@@ -118,8 +133,6 @@ const renderCards = (offers) => {
     const popupCard = createCard(offer);
     fragment.append(popupCard);
   });
-
-  cardContainer.append(fragment);
 };
 
 export { renderCards };
